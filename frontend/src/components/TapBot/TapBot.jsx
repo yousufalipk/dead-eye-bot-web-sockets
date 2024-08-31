@@ -111,8 +111,9 @@ const TapComponent = () => {
                 <div
                     className='relative mt-7 tap-image'
                     onPointerDown={handleUpdateBalance}
+                    /*
                     onTouchStart={handleUpdateBalance} // Handle touch events
-                    onMouseDown={handleUpdateBalance} // Handle mouse events
+                    onMouseDown={handleUpdateBalance} // Handle mouse events  */
                 >
                     <img src={DeadEyeLogo} width={280} alt="DEB Coin" />
                     {clicks.map((click) => (
