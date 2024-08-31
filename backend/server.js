@@ -18,6 +18,8 @@ const io = socketIo(server, {
     },
 });
 
+console.log("Port", PORT);
+
 // Middleware
 app.use(express.json());
 app.use(cors({
