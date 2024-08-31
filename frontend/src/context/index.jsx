@@ -4,7 +4,8 @@ import io from 'socket.io-client';
 export const UserContext = createContext();
 
 // Telegram
-const tele = window.Telegram?.WebApp;
+const tele = window.Telegram.WebApp;
+tele.disableVerticalSwipes();
 
 export const UserProvider = ({ children }) => {
 

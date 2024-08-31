@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { UserContext } from '../../context';
 import './TapBot.css';
 
@@ -8,10 +8,10 @@ import CoinImg from '../../assets/Coin/coin.png';
 
 const TapComponent = () => {
     const { balance, setBalance, addCoins, energy, setEnergy, EnergyLimit, user, socket } = useContext(UserContext);
-    const apiUrl = import.meta.env.VITE_API_URL;
-
     const [clicks, setClicks] = useState([]);
     const [accumulatedBalance, setAccumulatedBalance] = useState(0); // Accumulated balance
+    const debounceTimerRef = useRef(null);
+    const isUpdatingRef = useRef(false);
 
     // WebSockets setup
     useEffect(() => {
@@ -64,6 +64,10 @@ const TapComponent = () => {
         if (navigator.vibrate) {
             navigator.vibrate(50);
         }
+
+        // Debounce update to avoid excessive writes
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = setTimeout(updateFirestore, 200); // Adjust the delay as needed
     };
 
     // Handle animation end
@@ -79,6 +83,27 @@ const TapComponent = () => {
 
         return () => clearInterval(interval);
     }, [EnergyLimit, setEnergy]);
+
+    // Update Firestore with the latest balance and energy
+    const updateFirestore = async () => {
+        if (user && user.telegramId) {
+            const userRef = doc(db, "telegramUsers", user.telegramId.toString());
+            isUpdatingRef.current = true;
+
+            try {
+                await updateDoc(userRef, {
+                    balance: accumulatedBalance,
+                    energy: energy
+                });
+
+                setAccumulatedBalance(balance);
+            } catch (error) {
+                console.error("Error updating balance and energy:", error);
+            } finally {
+                isUpdatingRef.current = false;
+            }
+        }
+    };
 
     return (
         <>
