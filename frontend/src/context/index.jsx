@@ -1,13 +1,14 @@
 import React, { createContext, useEffect, useState } from 'react';
-import axios from 'axios';
-
 export const UserContext = createContext();
+import io from 'socket.io-client';
+
 // Telegram
 const tele = window.Telegram?.WebApp;
 
 export const UserProvider = ({ children }) => {
     const staticUser = import.meta.env.VITE_STATIC_USER;
     const apiUrl = import.meta.env.VITE_API_URL;
+    const socket = io(apiUrl);
     
     const [user, setUser] = useState(null);
     const [balance, setBalance] = useState(0);
@@ -21,18 +22,23 @@ export const UserProvider = ({ children }) => {
 
                     let telegramUser;
                     if (staticUser === 'true') {
-                        const staticTelegramUser = {
+                        telegramUser = {
                             id: '03021223335',
                             first_name: 'John',
                             last_name: 'Doe',
                             username: 'johndoe_1'
                         };
-                        setUser(staticTelegramUser);
                     } 
                     else {
                         telegramUser = tele.initDataUnsafe?.user;
-                        setUser(telegramUser);
                     }
+
+                    socket.emit('getInitialBalance', telegramUser.id, telegramUser.first_name, telegramUser.last_name, telegramUser.username);
+                    
+                    socket.on('userInitialized', (data) => {
+                        setUser(data);
+                        console.log("Data", data);
+                    });
                 } else {
                     console.error("Telegram WebApp is not defined");
                 }
