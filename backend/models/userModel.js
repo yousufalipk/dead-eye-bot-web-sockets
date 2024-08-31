@@ -19,7 +19,7 @@ const userSchema = mongoose.Schema({
         type: Number
     }
 }, {
-    Timestamp
+    timestamp: true
 })
 
 const user = mongoose.model('User', userSchema, 'telegramUsers');
