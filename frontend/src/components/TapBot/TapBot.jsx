@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { UserContext } from '../../context';
 import io from 'socket.io-client';
 import './TapBot.css';
 
@@ -6,18 +7,18 @@ import './TapBot.css';
 import DeadEyeLogo from '../../assets/Logo/deadeye.png';
 import CoinImg from '../../assets/Coin/coin.png';
 
-const TapComponent = ({ telegramId }) => {
+const TapComponent = () => {
+    const { balance, setBalance, user } = useContext(UserContext);
     const apiUrl = import.meta.env.VITE_API_URL;
     const socket = io(apiUrl);
 
-    const [clicks, setClicks] = useState([]);
     const [energy, setEnergy] = useState(500);
-    const [balance, setBalance] = useState(0);
-    const energyToReduce = 1;
+
+    const [clicks, setClicks] = useState([]);
 
     // Web Sockets
     useEffect(() => {
-        socket.emit('getInitialBalance', telegramId);
+        socket.emit('getInitialBalance', user.id);
 
         socket.on('initialBalance', (data) => {
             setBalance(data.balance);
@@ -34,19 +35,10 @@ const TapComponent = ({ telegramId }) => {
         };
     }, [clicks]);
 
-    // Refill Energy every 1 second!
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setEnergy(prevEnergy => Math.min(prevEnergy + 1, 500)); // Set Max energy to 500
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, []);
-
     // Taping/Clicking (coins +1)
-    const handleClick = (e) => {
-        if (energy < energyToReduce) return; // Disable Tap when energy is zero
-        setBalance(balance + 1 );
+    const handleUpdateBalance = (e) => {
+        if (energy <= 0) return; // Disable Tap when energy is zero
+        setBalance(balance + 1);
         const target = e.currentTarget;
         if (target) {
             const rect = target.getBoundingClientRect();
@@ -54,8 +46,8 @@ const TapComponent = ({ telegramId }) => {
             const y = e.clientY - rect.top;
 
             setClicks(prevClicks => [...prevClicks, { id: Date.now(), x, y }]);
-            socket.emit('updateBalance', telegramId);
-            setEnergy(prevEnergy => prevEnergy - energyToReduce);
+            socket.emit('updateBalance', user.id);
+            setEnergy(prevEnergy => prevEnergy - 1);
 
             // Trigger vibration on eligible devices
             if (navigator.vibrate) {
@@ -67,7 +59,16 @@ const TapComponent = ({ telegramId }) => {
     // Handle animation end
     const handleAnimationEnd = (id) => {
         setClicks(prevClicks => prevClicks.filter(click => click.id !== id));
-    };
+    }; 
+
+    // Refill energy over time
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setEnergy(prevEnergy => Math.min(prevEnergy + 1, 500));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <>
@@ -78,7 +79,7 @@ const TapComponent = ({ telegramId }) => {
             </div>
             {/* Button */}
             <div className='flex-grow flex items-center justify-center mt-3'>
-                <div className='relative mt-7 tap-image' onClick={handleClick}>
+                <div className='relative mt-7 tap-image' onClick={handleUpdateBalance}>
                     <img src={DeadEyeLogo} width={280} alt="DEB Coin" />
                     {clicks.map((click) => (
                         <div className='absolute text-5xl font-bold opacity-0 text-white'
@@ -94,6 +95,7 @@ const TapComponent = ({ telegramId }) => {
                         </div>
                     ))}
                 </div>
+
             </div>
             <div className='flex items-center justify-center w-4/5 m-auto text-center text-white font-semibold text-3xl'>
                 <img src={CoinImg} alt="Coins" className='w-16' />
