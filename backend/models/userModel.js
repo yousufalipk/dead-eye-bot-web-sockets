@@ -18,6 +18,8 @@ const userSchema = mongoose.Schema({
     balance: {
         type: Number
     }
+}, {
+    Timestamp
 })
 
 const user = mongoose.model('User', userSchema, 'telegramUsers');
