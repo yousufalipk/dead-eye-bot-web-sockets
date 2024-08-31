@@ -8,9 +8,13 @@ import CoinImg from '../../assets/Coin/coin.png';
 
 const TapComponent = () => {
     const { balance, setBalance, addCoins, energy, setEnergy, EnergyLimit, user, socket } = useContext(UserContext);
+
     const [clicks, setClicks] = useState([]);
+
     const [accumulatedBalance, setAccumulatedBalance] = useState(0); // Accumulated balance
+
     const debounceTimerRef = useRef(null);
+
     const isUpdatingRef = useRef(false);
 
     // WebSockets setup
@@ -30,7 +34,7 @@ const TapComponent = () => {
             if (accumulatedBalance > 0 && user && user.telegramId && !isUpdatingRef.current) {
                 updateBalance();
             }
-        }, 5000);  // Set delay for update 
+        }, 2500);  // Set delay for update 
 
         return () => clearInterval(interval);
     }, [accumulatedBalance, socket, user]);
@@ -40,9 +44,9 @@ const TapComponent = () => {
         if (energy <= 0) return; // Skip if no energy left
 
         // Get touch or click positions
-        const touchPoints = Array.from(e.changedTouches || [e]); // For touch events or mouse event
+        const touchPoints = Array.from(e.changedTouches || [e]);
         const newClicks = touchPoints.map((point) => ({
-            id: Date.now() + Math.random(), // Unique identifier for each tap
+            id: Date.now() + Math.random(),
             x: point.clientX,
             y: point.clientY
         }));
