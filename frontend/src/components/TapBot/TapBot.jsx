@@ -84,7 +84,7 @@ const TapComponent = () => {
             </div>
             {/* Button */}
             <div className='flex-grow flex items-center justify-center mt-3'>
-                <div className='relative mt-7 tap-image' onClick={handleUpdateBalance}>
+                <div className='relative mt-7 tap-image' onPointerDown={handleUpdateBalance}>
                     <img src={DeadEyeLogo} width={280} alt="DEB Coin" />
                     {clicks.map((click) => (
                         <div
