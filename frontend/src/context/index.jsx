@@ -24,6 +24,8 @@ export const UserProvider = ({ children }) => {
 
     const [energy, setEnergy] = useState(EnergyLimit);
 
+    const updateInterval = 5000; // 5 seconds interval
+
 
     useEffect(() => {
         const socket = io(apiUrl);
@@ -87,7 +89,8 @@ export const UserProvider = ({ children }) => {
             setAddCoins,
             energy,
             setEnergy,
-            EnergyLimit
+            EnergyLimit,
+            updateInterval
         }}>
             {children}
         </UserContext.Provider>

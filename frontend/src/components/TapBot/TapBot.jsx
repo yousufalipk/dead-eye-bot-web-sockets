@@ -8,11 +8,12 @@ import DeadEyeLogo from '../../assets/Logo/deadeye.png';
 import CoinImg from '../../assets/Coin/coin.png';
 
 const TapComponent = () => {
-    const { balance, setBalance, addCoins, energy, setEnergy, EnergyLimit, user } = useContext(UserContext);
+    const { balance, setBalance, addCoins, energy, setEnergy, EnergyLimit, user, updateInterval } = useContext(UserContext);
     const apiUrl = import.meta.env.VITE_API_URL;
     const socket = io(apiUrl, { transports: ['websocket'], reconnection: true });
 
     const [clicks, setClicks] = useState([]);
+    const [accumulatedBalance, setAccumulatedBalance] = useState(0); // Accumulated balance
 
     // WebSockets setup
     useEffect(() => {
@@ -25,15 +26,29 @@ const TapComponent = () => {
         };
     }, [socket, setBalance]);
 
+    // Accumulate balance updates and send to server after interval
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (accumulatedBalance > 0 && user && user.telegramId) {
+                socket.emit('updateBalance', user.telegramId, accumulatedBalance);
+                setAccumulatedBalance(0); // Reset accumulated balance after sending to server
+            }
+        }, updateInterval);
+
+        return () => clearInterval(interval);
+    }, [accumulatedBalance, updateInterval, socket, user]);
+
     // Handle Tap
     const handleUpdateBalance = () => {
         if (energy <= 0) return; // Disable Tap when energy is zero
 
         setClicks(prevClicks => [...prevClicks, { id: Date.now(), x: 0, y: 0 }]);
 
-        if (user && user.telegramId) {
-            socket.emit('updateBalance', user.telegramId, addCoins);
-        }
+        // Update the displayed balance immediately
+        setBalance(prevBalance => prevBalance + addCoins);
+
+        // Accumulate the balance to be sent to the server later
+        setAccumulatedBalance(prevAccumulated => prevAccumulated + addCoins);
 
         setEnergy(prevEnergy => Math.max(prevEnergy - 1, 0)); 
 
