@@ -3,12 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const connectDb = require('./config/db');
-const userRoutes = require('./Router/userRoutes');
 const { PORT, FRONTEND_PATH } = require('./config/index');
 const UserModel = require('./models/userModel');
 const socketIo = require('socket.io');
-
-const UserModel = require('./models/userModel');
 
 const app = express();
 const server = http.createServer(app);
@@ -91,8 +88,6 @@ io.on('connection', (socket) => {
 // Database Connection
 connectDb();
 
-// Routes
-app.use('/', userRoutes);
 
 app.get('/', (req, res) => {
     res.send('Backend is running');
