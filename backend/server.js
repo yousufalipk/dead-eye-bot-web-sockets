@@ -32,10 +32,11 @@ app.use(cors({
 
 // WebSockets setup
 io.on('connection', (socket) => {
-    console.log('New client connected');
+    console.log("A user connected!")
 
     // Handle user initialization
     socket.on('initializeUser', async (telegramId, firstName, lastName, username) => {
+        console.log("Initilizing User!")
         try {
             let user = await UserModel.findOne({ telegramId });
             if (!user) {
@@ -58,6 +59,7 @@ io.on('connection', (socket) => {
 
     // Handle balance update requests
     socket.on('updateBalance', async (telegramId, addCoins) => {
+        console.log("Updating balance")
         try {
             const user = await UserModel.findOne({ telegramId });
             if (user) {
@@ -76,11 +78,6 @@ io.on('connection', (socket) => {
             console.error('Error updating balance:', error);
             socket.emit('error', { message: 'Error updating balance' });
         }
-    });
-
-    // Handle client disconnect
-    socket.on('disconnect', () => {
-        console.log('Client disconnected');
     });
 });
 
