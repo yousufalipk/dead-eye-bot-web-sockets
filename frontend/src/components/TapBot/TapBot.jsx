@@ -27,10 +27,8 @@ const TapComponent = () => {
     // Accumulate balance updates and send to server after interval
     useEffect(() => {
         const interval = setInterval(() => {
-            if (accumulatedBalance > 0 && user && user.telegramId) {
-                console.log("Balance Updated Successfully!");
-                socket.emit('updateBalance', user.telegramId, accumulatedBalance);
-                setAccumulatedBalance(0); // Reset accumulated balance after sending to server
+            if (accumulatedBalance > 0 && user && user.telegramId && !isUpdatingRef.current) {
+                updateBalance();
             }
         }, 5000);  // Set delay for update 
 
@@ -67,7 +65,11 @@ const TapComponent = () => {
 
         // Debounce update to avoid excessive writes
         clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = setTimeout(updateFirestore, 200); // Adjust the delay as needed
+        debounceTimerRef.current = setTimeout(() => {
+            if (!isUpdatingRef.current) {
+                updateBalance();
+            }
+        }, 200); // Adjust the delay as needed
     };
 
     // Handle animation end
@@ -84,24 +86,16 @@ const TapComponent = () => {
         return () => clearInterval(interval);
     }, [EnergyLimit, setEnergy]);
 
-    // Update Firestore with the latest balance and energy
-    const updateFirestore = async () => {
-        if (user && user.telegramId) {
-            const userRef = doc(db, "telegramUsers", user.telegramId.toString());
-            isUpdatingRef.current = true;
-
-            try {
-                await updateDoc(userRef, {
-                    balance: accumulatedBalance,
-                    energy: energy
-                });
-
-                setAccumulatedBalance(balance);
-            } catch (error) {
-                console.error("Error updating balance and energy:", error);
-            } finally {
-                isUpdatingRef.current = false;
-            }
+    // Update backend with the latest balance and energy
+    const updateBalance = async () => {
+        isUpdatingRef.current = true;
+        try {
+            await socket.emit('updateBalance', user.telegramId, accumulatedBalance);
+            setAccumulatedBalance(0); // Reset accumulated balance after sending to server
+        } catch (error) {
+            console.error("Error updating balance:", error);
+        } finally {
+            isUpdatingRef.current = false;
         }
     };
 
