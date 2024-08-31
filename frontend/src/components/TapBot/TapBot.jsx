@@ -36,30 +36,35 @@ const TapComponent = () => {
 
         return () => clearInterval(interval);
     }, [accumulatedBalance, socket, user]);
-    
 
     // Handle Tap
-    const handleUpdateBalance = () => {
+    const handleUpdateBalance = (e) => {
         if (energy <= 0) return; // Skip if no energy left
-    
-        setClicks(prevClicks => [...prevClicks, { id: Date.now(), x: 0, y: 0 }]);
-    
-        // Update balance only if the balance will change
+
+        // Get touch or click positions
+        const touchPoints = Array.from(e.changedTouches || [e]); // For touch events or mouse event
+        const newClicks = touchPoints.map((point) => ({
+            id: Date.now() + Math.random(), // Unique identifier for each tap
+            x: point.clientX,
+            y: point.clientY
+        }));
+
+        setClicks(prevClicks => [...prevClicks, ...newClicks]);
+
+        // Update balance and energy
         if (addCoins > 0) {
-            setBalance(prevBalance => prevBalance + addCoins);
-            setAccumulatedBalance(prevAccumulated => prevAccumulated + addCoins);
+            setBalance(prevBalance => prevBalance + addCoins * newClicks.length);
+            setAccumulatedBalance(prevAccumulated => prevAccumulated + addCoins * newClicks.length);
         }
-    
-        // Decrease energy only if it will change
+        
         if (energy > 0) {
-            setEnergy(prevEnergy => Math.max(prevEnergy - 1, 0));
+            setEnergy(prevEnergy => Math.max(prevEnergy - newClicks.length, 0)); // Decrease energy by the number of taps
         }
-    
+        
         if (navigator.vibrate) {
             navigator.vibrate(50);
         }
     };
-    
 
     // Handle animation end
     const handleAnimationEnd = (id) => {
@@ -84,7 +89,12 @@ const TapComponent = () => {
             </div>
             {/* Button */}
             <div className='flex-grow flex items-center justify-center mt-3'>
-                <div className='relative mt-7 tap-image' onPointerDown={handleUpdateBalance}>
+                <div
+                    className='relative mt-7 tap-image'
+                    onPointerDown={handleUpdateBalance}
+                    onTouchStart={handleUpdateBalance} // Handle touch events
+                    onMouseDown={handleUpdateBalance} // Handle mouse events
+                >
                     <img src={DeadEyeLogo} width={280} alt="DEB Coin" />
                     {clicks.map((click) => (
                         <div
