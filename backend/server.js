@@ -7,8 +7,11 @@ const { PORT, FRONTEND_PATH } = require('./config/index');
 const UserModel = require('./models/userModel');
 const socketIo = require('socket.io');
 
+// Initialize app and server
 const app = express();
 const server = http.createServer(app);
+
+// Initialize socket.io with CORS settings
 const io = socketIo(server, {
     cors: {
         origin: FRONTEND_PATH,
@@ -27,68 +30,64 @@ app.use(cors({
     credentials: true
 }));
 
-
 // WebSockets setup
 io.on('connection', (socket) => {
+    console.log('New client connected');
 
-    // Handle balance update requests
+    // Handle user initialization
     socket.on('initializeUser', async (telegramId, firstName, lastName, username) => {
         try {
-            const user = await UserModel.findOne({ telegramId });
-            if (user) {
-                socket.emit('userInitialized', { user: user });
-            } else {
-                const newUser = UserModel({
-                    telegramId: telegramId,
-                    firstName: firstName,
-                    lastName: lastName,
-                    username
-                })
-                await newUser.save();
-                socket.emit('userInitialized', { user: newUser });
+            let user = await UserModel.findOne({ telegramId });
+            if (!user) {
+                user = new UserModel({
+                    telegramId,
+                    firstName,
+                    lastName,
+                    username,
+                    balance: 0,
+                });
+                await user.save();
             }
+            // Send initialized user data back to the client
+            socket.emit('userInitialized', { user });
         } catch (error) {
+            console.error('Error initializing user:', error);
             socket.emit('error', { message: 'Error initializing user' });
         }
     });
 
-    // Handle fetch initial balance
-    socket.on('getInitialBalance', async (telegramId) => {
-        try {
-            const user = await UserModel.findOne({ telegramId });
-            if (user) {
-                socket.emit('initialBalance', { userId: user.id, balance: user.balance });
-            } else {
-                socket.emit('error', { message: 'User not found' });
-            }
-        } catch (error) {
-            socket.emit('error', { message: 'Error fetching balance' });
-        }
-    });
-
     // Handle balance update requests
-    socket.on('updateBalance', async (telegramId) => {
+    socket.on('updateBalance', async (telegramId, addCoins) => {
         try {
             const user = await UserModel.findOne({ telegramId });
             if (user) {
-                user.balance += 1;  // Increment the balance by 1
+                user.balance += addCoins; // Increment the value from frontend
                 await user.save();
 
-                socket.emit('balanceUpdated', { userId: user.id, newBalance: user.balance });
+                // Notify the client who updated the balance
+                socket.emit('balanceUpdated', { user });
+
+                // Optionally, notify all clients about the updated balance
+                io.emit('balanceUpdated', { user });
             } else {
                 socket.emit('error', { message: 'User not found' });
             }
         } catch (error) {
+            console.error('Error updating balance:', error);
             socket.emit('error', { message: 'Error updating balance' });
         }
     });
-});
 
+    // Handle client disconnect
+    socket.on('disconnect', () => {
+        console.log('Client disconnected');
+    });
+});
 
 // Database Connection
 connectDb();
 
-
+// Default route
 app.get('/', (req, res) => {
     res.send('Backend is running');
 });

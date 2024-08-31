@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 
-const userSchema = mongoose.Schema({
+const userSchema = new mongoose.Schema({
     telegramId: {
         type: String,
-        required: true
+        required: true,
+        unique: true // Ensures each telegramId is unique
     },
     firstName: {
         type: String
@@ -15,12 +16,13 @@ const userSchema = mongoose.Schema({
         type: String
     },
     balance: {
-        type: Number
+        type: Number,
+        default: 0 
     }
 }, {
-    timestamp: true
-})
+    timestamps: true
+});
 
-const user = mongoose.model('User', userSchema, 'telegramUsers');
+const User = mongoose.model('User', userSchema, 'telegramUsers');
 
-module.exports = user;
+module.exports = User;
