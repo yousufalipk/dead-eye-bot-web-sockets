@@ -8,6 +8,8 @@ const { PORT, FRONTEND_PATH } = require('./config/index');
 const UserModel = require('./models/userModel');
 const socketIo = require('socket.io');
 
+import UserModel from './models/userModel';
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -32,12 +34,33 @@ app.use(cors({
 // WebSockets setup
 io.on('connection', (socket) => {
 
+    // Handle balance update requests
+    socket.on('initializeUser', async (telegramId, firstName, lastName, username) => {
+        try {
+            const user = await UserModel.findOne({ telegramId });
+            if (user) {
+                socket.emit('userInitialized', { user: user });
+            } else {
+                const newUser = UserModel({
+                    telegramId: telegramId,
+                    firstName: firstName,
+                    lastName: lastName,
+                    username
+                })
+                await newUser.save();
+                socket.emit('userInitialized', { user: newUser });
+            }
+        } catch (error) {
+            socket.emit('error', { message: 'Error initializing user' });
+        }
+    });
+
     // Handle fetch initial balance
     socket.on('getInitialBalance', async (telegramId) => {
         try {
             const user = await UserModel.findOne({ telegramId });
             if (user) {
-                socket.emit('initialBalance', { userId: user._id, balance: user.balance });
+                socket.emit('initialBalance', { userId: user.id, balance: user.balance });
             } else {
                 socket.emit('error', { message: 'User not found' });
             }
@@ -54,12 +77,12 @@ io.on('connection', (socket) => {
                 user.balance += 1;  // Increment the balance by 1
                 await user.save();
 
-                socket.emit('balanceUpdated', { userId: user._id, newBalance: user.balance });
+                socket.emit('balanceUpdated', { userId: user.id, newBalance: user.balance });
             } else {
-                socket.emit('error', { message: 'User not found' }); balance
+                socket.emit('error', { message: 'User not found' });
             }
         } catch (error) {
-            socket.emit('error', { message: 'Error updating balance' }); balance
+            socket.emit('error', { message: 'Error updating balance' });
         }
     });
 });
@@ -70,6 +93,7 @@ connectDb();
 
 // Routes
 app.use('/', userRoutes);
+
 app.get('/', (req, res) => {
     res.send('Backend is running');
 });
