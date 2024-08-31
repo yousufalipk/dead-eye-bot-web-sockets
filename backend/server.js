@@ -8,7 +8,7 @@ const { PORT, FRONTEND_PATH } = require('./config/index');
 const UserModel = require('./models/userModel');
 const socketIo = require('socket.io');
 
-import UserModel from './models/userModel';
+const UserModel = require('./models/userModel');
 
 const app = express();
 const server = http.createServer(app);
