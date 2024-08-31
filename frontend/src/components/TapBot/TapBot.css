@@ -1,0 +1,39 @@
+@keyframes float {
+    0% {
+        opacity: 1;
+        transform: translateY(0)
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+}
+
+
+/* TapBot.css */
+
+/* Animation for the tap effect */
+@keyframes tapEffect {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(0.9);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Add class for tap animation */
+.tap-effect {
+    animation: tapEffect 0.2s ease-out;
+}
+
+/* Optional: Styling for the image to ensure it's centered and responsive */
+.tap-image {
+    transition: transform 0.2s ease;
+}
