@@ -6,16 +6,21 @@ import './TapBot.css';
 import DeadEyeLogo from '../../assets/Logo/deadeye.png';
 import CoinImg from '../../assets/Coin/coin.png';
 
+let tapBalance = 0;
+
 const TapComponent = () => {
-    const { balance, setBalance, addCoins, energy, setEnergy, EnergyLimit, user, socket } = useContext(UserContext);
+    const { balance,
+        setBalance,
+        addCoins,
+        energy,
+        setEnergy,
+        EnergyLimit,
+        user,
+        socket,
+        clicks,
+        setClicks
+    } = useContext(UserContext);
 
-    const [clicks, setClicks] = useState([]);
-
-    const [accumulatedBalance, setAccumulatedBalance] = useState(0); // Accumulated balance
-
-    const debounceTimerRef = useRef(null);
-
-    const isUpdatingRef = useRef(false);
 
     // WebSockets setup
     useEffect(() => {
@@ -24,56 +29,49 @@ const TapComponent = () => {
         });
 
         return () => {
-            socket.off('balanceUpdated'); 
+            socket.off('balanceUpdated');
         };
     }, [socket, setBalance]);
 
-    // Accumulate balance updates and send to server after interval
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (accumulatedBalance > 0 && user && user.telegramId && !isUpdatingRef.current) {
-                updateBalance();
-            }
-        }, 2500);  // Set delay for update 
 
-        return () => clearInterval(interval);
-    }, [accumulatedBalance, socket, user]);
+    // Update balance every 5 seconds
+    useEffect(() => {
+        const intervalId = setInterval(async () => {
+            try {
+                await socket.emit('updateBalance', user.telegramId, tapBalance);
+                tapBalance = 0; // Reset tapBalance
+                console.log("Balance Updated Successfully!");
+            } catch (error) {
+                console.error("Error updating balance:", error);
+            }
+        }, 5000); // Every 5 seconds
+
+        return () => clearInterval(intervalId);
+    }, [socket, user.telegramId]);
+
 
     // Handle Tap
     const handleUpdateBalance = (e) => {
-        if (energy <= 0) return; // Skip if no energy left
+        // Skip if no energy left
+        if (energy <= 0) return;
 
-        // Get touch or click positions
-        const touchPoints = Array.from(e.changedTouches || [e]);
-        const newClicks = touchPoints.map((point) => ({
-            id: Date.now() + Math.random(),
-            x: point.clientX,
-            y: point.clientY
-        }));
+        // Increment the count 
+        const rect = e.target.getBoundingClientRect();
+        const newClick = {
+            id: Date.now(), // Fixed here
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+        };
+        setClicks(prevClicks => [...prevClicks, newClick]);
 
-        setClicks(prevClicks => [...prevClicks, ...newClicks]);
+        // Reduce Energy - 1
+        setEnergy(prevEnergy => Math.max(prevEnergy - 1, 0));
 
-        // Update balance and energy
-        if (addCoins > 0) {
-            setBalance(prevBalance => prevBalance + addCoins * newClicks.length);
-            setAccumulatedBalance(prevAccumulated => prevAccumulated + addCoins * newClicks.length);
-        }
-        
-        if (energy > 0) {
-            setEnergy(prevEnergy => Math.max(prevEnergy - newClicks.length, 0)); // Decrease energy by the number of taps
-        }
-        
-        if (navigator.vibrate) {
-            navigator.vibrate(50);
-        }
+        tapBalance++;
 
-        // Debounce update to avoid excessive writes
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = setTimeout(() => {
-            if (!isUpdatingRef.current) {
-                updateBalance();
-            }
-        }, 200); // Adjust the delay as needed
+        setTimeout(() => {
+            setClicks(prevClicks => prevClicks.filter(click => click.id !== newClick.id));
+        }, 800);
     };
 
     // Handle animation end
@@ -90,19 +88,6 @@ const TapComponent = () => {
         return () => clearInterval(interval);
     }, [EnergyLimit, setEnergy]);
 
-    // Update backend with the latest balance and energy
-    const updateBalance = async () => {
-        isUpdatingRef.current = true;
-        try {
-            await socket.emit('updateBalance', user.telegramId, accumulatedBalance);
-            setAccumulatedBalance(0); // Reset accumulated balance after sending to server
-        } catch (error) {
-            console.error("Error updating balance:", error);
-        } finally {
-            isUpdatingRef.current = false;
-        }
-    };
-
     return (
         <>
             {/* Refill energy */}
@@ -115,9 +100,6 @@ const TapComponent = () => {
                 <div
                     className='relative mt-7 tap-image'
                     onPointerDown={handleUpdateBalance}
-                    /*
-                    onTouchStart={handleUpdateBalance} // Handle touch events
-                    onMouseDown={handleUpdateBalance} // Handle mouse events  */
                 >
                     <img src={DeadEyeLogo} width={280} alt="DEB Coin" />
                     {clicks.map((click) => (
@@ -131,14 +113,14 @@ const TapComponent = () => {
                             onAnimationEnd={() => handleAnimationEnd(click.id)}
                             key={click.id}
                         >
-                            +{addCoins}
+                            +{addCoins} 
                         </div>
                     ))}
                 </div>
             </div>
             <div className='flex items-center justify-center w-4/5 m-auto text-center text-white font-semibold text-3xl'>
                 <img src={CoinImg} alt="Coins" className='w-16' />
-                <span>{balance}</span>
+                <span>{(balance + tapBalance)}</span>
             </div>
         </>
     );

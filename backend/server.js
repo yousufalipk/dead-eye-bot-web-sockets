@@ -32,11 +32,9 @@ app.use(cors({
 
 // WebSockets setup
 io.on('connection', (socket) => {
-    console.log("A user connected!")
 
     // Handle user initialization
     socket.on('initializeUser', async (telegramId, firstName, lastName, username) => {
-        console.log("Initilizing User!")
         try {
             let user = await UserModel.findOne({ telegramId });
             if (!user) {
@@ -58,12 +56,12 @@ io.on('connection', (socket) => {
     });
 
     // Handle balance update requests
-    socket.on('updateBalance', async (telegramId, addCoins) => {
-        console.log("Updating balance")
+    socket.on('updateBalance', async (telegramId, tapBalance) => {
+        console.log("Updating balance", tapBalance)
         try {
             const user = await UserModel.findOne({ telegramId });
             if (user) {
-                user.balance += addCoins; // Increment the value from frontend
+                user.balance += tapBalance; // Increment the value from frontend
                 await user.save();
 
                 // Notify the client who updated the balance

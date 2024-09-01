@@ -25,6 +25,8 @@ export const UserProvider = ({ children }) => {
 
     const [energy, setEnergy] = useState(EnergyLimit);
 
+    const [clicks, setClicks] = useState([]);
+
 
     useEffect(() => {
         const initilizeUser = async () => {
@@ -34,6 +36,7 @@ export const UserProvider = ({ children }) => {
                 if (tele) {
                     tele.expand();
                     tele.ready();
+                    window.Telegram.WebApp.setHeaderColor("#191b33");
 
                     let telegramUser;
                     if (staticUser === 'true') {
@@ -82,13 +85,15 @@ export const UserProvider = ({ children }) => {
         <UserContext.Provider value={{
             socket,
             user,
+            EnergyLimit, 
             balance,
             setBalance,
             addCoins,
             setAddCoins,
             energy,
             setEnergy,
-            EnergyLimit
+            clicks,
+            setClicks,
         }}>
             {children}
         </UserContext.Provider>
