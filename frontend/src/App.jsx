@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import { Routes, Route } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 import HomePage from './pages/Home/Home';
 import BoostPage from './pages/Boost/Boost';
@@ -26,24 +26,59 @@ function App() {
             <Route path="*" element={<HomePage />} />
           </Routes>
         </div>
-              
+
         {/* NavBar */}
-        <div className='my-20 text-white bg-blue-950 mx-2 rounded-3xl'> 
-          <ul className='flex flex-row justify-between mx-5 p-3'>
-            <li>
-              <Link to="/" >Home</Link>
+        <div className='my-20 text-white bg-blue-950 mx-2 p-3 rounded-3xl overflow-hidden'>
+          <ul className='flex flex-row justify-between'>
+            <li>  {/* Home */}
+              <NavLink
+                to="/"
+                className={({ isActive }) =>
+                  isActive ? 'py-3 bg-gray-900 rounded-3xl px-5' : 'text-white'
+                }
+              >
+                Home
+              </NavLink>
             </li>
-            <li>
-              <Link to="/boost" >Boost</Link>
+            <li> {/* Boost */}
+              <NavLink
+                to="/boost"
+                className={({ isActive }) =>
+                  isActive ? 'py-3 bg-gray-900 rounded-3xl px-5' : 'text-white'
+                }
+              >
+                Boost
+              </NavLink>
             </li>
-            <li>
-              <Link to="/quest" >Quest</Link>
+            <li> {/* Quest */}
+              <NavLink
+                to="/quest"
+                className={({ isActive }) =>
+                  isActive ? 'py-3 bg-gray-900 rounded-3xl px-5' : 'text-white'
+                }
+              >
+                Quest
+              </NavLink>
             </li>
-            <li>
-              <Link to="/friends" >Friends</Link>
+            <li> {/* Friends */}
+              <NavLink 
+                to="/friends"
+                className={({ isActive }) =>
+                  isActive ? 'py-3 bg-gray-900 rounded-3xl px-5' : 'text-white'
+                }
+              >
+                Friends
+              </NavLink>
             </li>
-            <li>
-              <Link to="/wallet" >Wallet</Link>
+            <li> {/* Wallet */}
+              <NavLink
+                to="/wallet"
+                className={({ isActive }) =>
+                  isActive ? 'py-3 bg-gray-900 rounded-3xl px-5' : 'text-white'
+                }
+              >
+                Wallet
+              </NavLink>
             </li>
           </ul>
         </div>

@@ -44,7 +44,7 @@ const TapComponent = () => {
             } catch (error) {
                 console.error("Error updating balance:", error);
             }
-        }, 5000); // Every 5 seconds
+        }, 1000); // Every 5 seconds
 
         return () => clearInterval(intervalId);
     }, [socket, user.telegramId]);

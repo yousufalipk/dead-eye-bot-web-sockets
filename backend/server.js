@@ -57,21 +57,23 @@ io.on('connection', (socket) => {
 
     // Handle balance update requests
     socket.on('updateBalance', async (telegramId, tapBalance) => {
-        console.log("Updating balance", tapBalance)
         try {
-            const user = await UserModel.findOne({ telegramId });
-            if (user) {
-                user.balance += tapBalance; // Increment the value from frontend
-                await user.save();
+            // Add a 5-second delay before updating the balance
+            setTimeout(async () => {
+                const user = await UserModel.findOne({ telegramId });
+                if (user) {
+                    user.balance += tapBalance;
+                    await user.save();
 
-                // Notify the client who updated the balance
-                socket.emit('balanceUpdated', { user });
+                    // Notify the client who updated the balance
+                    socket.emit('balanceUpdated', { user });
 
-                // Optionally, notify all clients about the updated balance
-                io.emit('balanceUpdated', { user });
-            } else {
-                socket.emit('error', { message: 'User not found' });
-            }
+                    // Optionally, notify all clients about the updated balance
+                    io.emit('balanceUpdated', { user });
+                } else {
+                    socket.emit('error', { message: 'User not found' });
+                }
+            }, 5000); // 5000 milliseconds = 5 seconds
         } catch (error) {
             console.error('Error updating balance:', error);
             socket.emit('error', { message: 'Error updating balance' });
