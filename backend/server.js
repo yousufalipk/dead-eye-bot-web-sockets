@@ -73,7 +73,7 @@ io.on('connection', (socket) => {
                 } else {
                     socket.emit('error', { message: 'User not found' });
                 }
-            }, 5000); // 5000 milliseconds = 5 seconds
+            }, 1000); // 1000 milliseconds = 1 seconds
         } catch (error) {
             console.error('Error updating balance:', error);
             socket.emit('error', { message: 'Error updating balance' });
